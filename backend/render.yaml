@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: 38demo-backend
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: FIREBASE_SERVICE_ACCOUNT_JSON
+        sync: false
+      - key: ALLOWED_ORIGINS
+        sync: false
+      - key: CHAT_MODEL
+        value: gpt-4o-mini
+      - key: CHAT_MAX_TOKENS
+        value: "500"

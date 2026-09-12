@@ -1,0 +1,19 @@
+# Python
+backend/.venv/
+backend/__pycache__/
+backend/**/__pycache__/
+*.pyc
+backend/.env
+backend/sample_data.json
+
+# Node / Vercel
+frontend/node_modules/
+frontend/.vercel/
+
+# 서비스 계정 키 등 비밀 파일
+*.json.key
+serviceAccountKey.json
+
+# OS
+.DS_Store
+Thumbs.db
