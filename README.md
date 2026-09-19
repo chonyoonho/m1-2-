@@ -209,8 +209,22 @@ Claude Desktop 설정 예시 (`claude_desktop_config.json`):
 
 ## 제출 스크린샷
 
-배포 후 아래 화면을 캡처해 이 섹션에 추가하세요.
+실제 배포 URL(https://frontend-blond-one-98.vercel.app)에서 캡처한 화면입니다.
 
-- [ ] 데이터 요약이 보이는 채팅 화면 (질문 + 답변 포함)
-- [ ] 데이터 관리 화면 (추가/수정/삭제 중 1개 동작이 보이도록)
-- [ ] 대화 기록 화면 (불러오기 동작이 보이도록)
+**데이터 요약이 보이는 채팅 화면 (질문 + 답변 포함)**
+
+![채팅 화면](docs/screenshots/chat.png)
+
+**데이터 관리 화면 (추가 동작)**
+
+![데이터 관리 화면](docs/screenshots/data.png)
+
+**대화 기록 화면 (불러오기 버튼)**
+
+![대화 기록 화면](docs/screenshots/history.png)
+
+**보너스: 통계 탭 (월별 추이 그래프 + 프로그램별 통계, 라이트/다크 모드)**
+
+| 라이트 모드 | 다크 모드 |
+|---|---|
+| ![통계 화면 라이트](docs/screenshots/stats-light.png) | ![통계 화면 다크](docs/screenshots/stats-dark.png) |
