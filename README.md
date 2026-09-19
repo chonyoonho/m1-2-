@@ -28,9 +28,9 @@
 
 | 항목 | URL |
 |---|---|
-| 프론트엔드 | _(Vercel 배포 후 기입)_ |
-| 백엔드 API | _(Render 배포 후 기입)_ |
-| Swagger 문서 | `{백엔드 URL}/docs` |
+| 프론트엔드 | https://frontend-blond-one-98.vercel.app |
+| 백엔드 API | https://three8demo-backend.onrender.com |
+| Swagger 문서 | https://three8demo-backend.onrender.com/docs |
 
 > ⚠️ Render 무료 티어는 일정 시간 요청이 없으면 슬립 상태가 되어, 배포 후 첫 요청은 응답까지 30초~1분 정도 걸릴 수 있습니다.
 > 프론트엔드 채팅 로딩 표시("답변을 생각하는 중입니다...")가 이 지연을 안내합니다.
