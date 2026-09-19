@@ -23,6 +23,7 @@ async function apiRequest(path, options = {}) {
 
 const Api = {
   getSummary: () => apiRequest("/api/data/summary"),
+  getStatistics: () => apiRequest("/api/data/statistics"),
   listData: () => apiRequest("/api/data"),
   createData: (payload) =>
     apiRequest("/api/data", { method: "POST", body: JSON.stringify(payload) }),

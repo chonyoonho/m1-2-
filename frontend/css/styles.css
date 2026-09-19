@@ -12,6 +12,20 @@
   --radius: 10px;
 }
 
+:root[data-theme="dark"] {
+  --navy: #4a6fc7;
+  --navy-dark: #0a0f1a;
+  --gold: #d9b563;
+  --gold-light: #efdda3;
+  --bg: #12151c;
+  --card-bg: #1b1f29;
+  --text: #e8e6e0;
+  --muted: #9aa0ab;
+  --border: #2b303c;
+  --danger: #e0705a;
+  --assistant-bubble: #262b38;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -21,6 +35,7 @@ body {
   font-family: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", -apple-system, sans-serif;
   background: var(--bg);
   color: var(--text);
+  transition: background 0.15s ease, color 0.15s ease;
 }
 
 .app-header {
@@ -65,6 +80,12 @@ body {
   color: var(--gold-light);
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .summary-badge {
   display: flex;
   align-items: center;
@@ -73,6 +94,16 @@ body {
   padding: 8px 14px;
   border-radius: 999px;
   font-size: 12.5px;
+}
+
+.btn-theme {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.25);
+  color: white;
+  font-size: 16px;
+  line-height: 1;
+  padding: 8px 10px;
+  border-radius: 999px;
 }
 
 .summary-badge .dot {
@@ -220,7 +251,7 @@ main {
 
 .msg.assistant {
   align-self: flex-start;
-  background: #f1efe8;
+  background: var(--assistant-bubble, #f1efe8);
   border: 1px solid var(--border);
   border-bottom-left-radius: 4px;
 }
@@ -400,6 +431,17 @@ th {
 
 .conversation-item .conv-actions button {
   margin-left: 8px;
+}
+
+.chart-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.export-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
 }
 
 .app-footer {

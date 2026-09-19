@@ -2,8 +2,9 @@ from datetime import date as date_type
 
 from fastapi import APIRouter, HTTPException
 
-from app.models.data import DataPointCreate, DataPointResponse, DataSummary
+from app.models.data import DataPointCreate, DataPointResponse, DataStatistics, DataSummary
 from app.services import analysis
+from app.services.data_service import fetch_all_rows
 from app.services.firestore_service import DATA_COLLECTION, get_db
 
 router = APIRouter(prefix="/api/data", tags=["data"])
@@ -17,22 +18,6 @@ def _doc_to_response(doc) -> DataPointResponse:
         value=payload["value"],
         memo=payload["memo"],
     )
-
-
-def fetch_all_rows() -> list[dict]:
-    db = get_db()
-    docs = db.collection(DATA_COLLECTION).stream()
-    rows = []
-    for doc in docs:
-        payload = doc.to_dict()
-        rows.append(
-            {
-                "date": date_type.fromisoformat(payload["date"]),
-                "value": payload["value"],
-                "memo": payload["memo"],
-            }
-        )
-    return rows
 
 
 @router.post("", response_model=DataPointResponse, status_code=201)
@@ -62,6 +47,17 @@ def list_data():
 def get_summary():
     rows = fetch_all_rows()
     return analysis.build_summary(rows)
+
+
+@router.get("/statistics", response_model=DataStatistics)
+def get_statistics():
+    """summary + 월별/프로그램별 세부 지표 (보너스: 요약 확장)."""
+    rows = fetch_all_rows()
+    return DataStatistics(
+        summary=analysis.build_summary(rows),
+        monthly=analysis.monthly_breakdown(rows),
+        by_program=analysis.program_breakdown(rows),
+    )
 
 
 @router.put("/{item_id}", response_model=DataPointResponse)

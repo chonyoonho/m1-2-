@@ -27,3 +27,25 @@ class DataSummary(BaseModel):
     count: int
     metrics: DataMetrics
     trend: str
+
+
+class MonthlyStat(BaseModel):
+    month: str
+    total: float
+    average: float
+    count: int
+
+
+class ProgramStat(BaseModel):
+    program: str
+    total: float
+    average: float
+    count: int
+
+
+class DataStatistics(BaseModel):
+    """보너스: summary를 월별/프로그램별 세부 지표로 확장한 응답."""
+
+    summary: DataSummary
+    monthly: list[MonthlyStat]
+    by_program: list[ProgramStat]

@@ -20,8 +20,9 @@
 |---|---|
 | 백엔드 | FastAPI, Pydantic, uvicorn |
 | 데이터베이스 | Firebase Firestore |
-| AI | OpenAI GPT API (Chat Completions) |
-| 프론트엔드 | HTML / CSS / JavaScript (바닐라, 프레임워크 미사용) |
+| AI | OpenAI GPT API (Chat Completions + Function Calling) |
+| AI 도구 연동 (보너스) | Function Calling, MCP Server (`mcp` SDK) |
+| 프론트엔드 | HTML / CSS / JavaScript (바닐라, 프레임워크 미사용) + Chart.js(그래프, CDN) |
 | 배포 | 백엔드: Render / 프론트엔드: Vercel |
 
 ## 배포 URL
@@ -45,7 +46,8 @@
 │   │   ├── config.py        # 환경 변수 설정
 │   │   ├── models/          # Pydantic 요청/응답 스키마
 │   │   ├── routers/         # data / conversations / chat 엔드포인트
-│   │   └── services/        # firestore, openai, 데이터 분석 로직
+│   │   └── services/        # firestore, data_service, analysis, openai, tools(function calling)
+│   ├── mcp_server.py    # 보너스: MCP 서버 (동일 도구를 MCP로 노출)
 │   ├── seed_data.py    # 샘플 참가자 수 데이터 생성/업로드 스크립트
 │   ├── requirements.txt
 │   ├── render.yaml     # Render 배포 설정
@@ -53,7 +55,7 @@
 └── frontend/           # 바닐라 HTML/CSS/JS 프론트엔드
     ├── index.html
     ├── css/styles.css
-    ├── js/              # config, api, chat, data, conversations, main
+    ├── js/              # config, api, theme, chat, data, conversations, stats, main
     ├── build.js         # Vercel 빌드 시 API_BASE_URL 주입 스크립트
     └── vercel.json
 ```
@@ -143,11 +145,67 @@ python -m http.server 3000
 | PUT | `/api/data/{id}` | 데이터 수정 |
 | DELETE | `/api/data/{id}` | 데이터 삭제 |
 | GET | `/api/data/summary` | 기간/통계/추세 요약 (프롬프트 주입용) |
+| GET | `/api/data/statistics` | summary + 월별/프로그램별 세부 통계 (보너스: 요약 확장) |
 | POST | `/api/conversations` | 대화 저장 |
 | GET | `/api/conversations` | 대화 목록 조회 (메시지 미포함) |
 | GET | `/api/conversations/{id}` | 특정 대화 전체 메시지 조회 |
 | DELETE | `/api/conversations/{id}` | 대화 삭제 |
-| POST | `/api/chat` | AI 채팅 (요약 조회 → 시스템 프롬프트 주입 → GPT 호출 → 대화 자동 저장) |
+| POST | `/api/chat` | AI 채팅 (요약 조회 → 시스템 프롬프트 주입 → GPT 호출(+도구 호출) → 대화 자동 저장) |
+
+## 보너스 과제
+
+### 1) AI 도구 호출 (Function Calling) + MCP Server 연동
+
+시스템 프롬프트에는 전체 집계(기간/총합/평균/최대/최소/추세)만 주입되기 때문에, "2025년 월별로는 어땠어?",
+"어떤 프로그램이 제일 인기 많아?" 같은 **요약만으로는 답할 수 없는 질문**을 받으면 GPT가 스스로 아래 도구를
+호출해 Firestore의 실제 데이터를 조회한 뒤 답합니다. (`backend/app/services/tools.py`)
+
+| 도구 | 언제 호출되나 | 무엇을 조회하나 |
+|---|---|---|
+| `get_monthly_breakdown(year?)` | 특정 연도/전체의 월별 수치, 최근 몇 개월 추이 질문 | 월별 총합/평균/건수 |
+| `get_program_breakdown()` | 어떤 프로그램이 인기 있는지, 프로그램별 비교 질문 | 프로그램별 총합/평균/건수 (총합 내림차순) |
+| `get_data_summary()` | 전체 요약을 다시 확인하고 싶을 때 | 기간/총합/평균/최대/최소/추세 |
+
+**호출 흐름** (`backend/app/services/openai_service.py`의 `get_chat_reply`)
+
+1. 시스템 프롬프트 + 대화 이력 + `tools` 스키마와 함께 GPT 호출
+2. 응답의 `finish_reason`이 `tool_calls`이면, 각 도구를 로컬에서 실제로 실행(Firestore 조회)
+3. 도구 실행 결과를 `role: tool` 메시지로 대화에 추가해 다시 GPT 호출
+4. `tool_calls`가 더 이상 없을 때까지 2~3을 반복(최대 4회)한 뒤 최종 답변 반환
+
+> 검증: `sk-cody-live-...`(`copa.codyssey.kr`, `gpt-5-mini`) 프록시로 실제 왕복 테스트 완료.
+> "어떤 프로그램이 참가자가 제일 많았어? 그리고 2023년 월별로는 어땠어?" 질문에 GPT가
+> `get_program_breakdown`과 `get_monthly_breakdown(year=2023)`을 스스로 호출해, `/api/data/statistics`가
+> 반환하는 실제 수치와 정확히 일치하는 답변을 생성함을 확인했습니다. (자세한 원문은 `실행결과.md` 참고)
+
+**MCP Server** (`backend/mcp_server.py`) — 동일한 3개 도구를 [Model Context Protocol](https://modelcontextprotocol.io)로도 노출합니다.
+Claude Desktop 등 MCP 클라이언트에서 FastAPI를 거치지 않고 같은 Firestore 데이터를 직접 조회할 수 있습니다.
+
+```bash
+cd backend
+python mcp_server.py   # stdio transport
+```
+
+Claude Desktop 설정 예시 (`claude_desktop_config.json`):
+
+```json
+{
+  "mcpServers": {
+    "38demo-data": {
+      "command": "python",
+      "args": ["<repo>/backend/mcp_server.py"],
+      "env": { "FIREBASE_SERVICE_ACCOUNT_JSON": "..." }
+    }
+  }
+}
+```
+
+### 2) 인사이트 · UX 고도화
+
+- **통계 확장**: `GET /api/data/statistics`가 기본 요약에 월별·프로그램별 세부 지표를 추가로 제공합니다.
+- **시각화**: 프론트엔드 "통계" 탭에서 Chart.js로 월별 참가자 수 추이 꺾은선 그래프를 표시합니다.
+- **데이터 내보내기**: "통계" 탭에서 전체 데이터를 CSV 또는 JSON으로 다운로드할 수 있습니다.
+- **다크 모드**: 헤더의 🌙/☀️ 버튼으로 전체 UI 다크 모드를 토글하며, 선택은 `localStorage`에 저장되고 차트 색상도 함께 갱신됩니다.
 
 ## 제출 스크린샷
 

@@ -40,6 +40,48 @@ def build_summary(rows: list[dict]) -> DataSummary:
     )
 
 
+def monthly_breakdown(rows: list[dict], year: int | None = None) -> list[dict]:
+    """월별 참가자 수 합계/평균/건수. year를 지정하면 해당 연도만 반환한다."""
+    monthly: dict[str, list[float]] = {}
+    for row in rows:
+        key = _fmt(row["date"])
+        if year is not None and not key.startswith(f"{year:04d}-"):
+            continue
+        monthly.setdefault(key, []).append(row["value"])
+
+    result = []
+    for month in sorted(monthly.keys()):
+        vals = monthly[month]
+        result.append(
+            {
+                "month": month,
+                "total": round(sum(vals), 1),
+                "average": round(sum(vals) / len(vals), 1),
+                "count": len(vals),
+            }
+        )
+    return result
+
+
+def program_breakdown(rows: list[dict]) -> list[dict]:
+    """프로그램(memo)별 참가자 수 합계/평균/건수. 총합 기준 내림차순."""
+    groups: dict[str, list[float]] = {}
+    for row in rows:
+        groups.setdefault(row["memo"], []).append(row["value"])
+
+    result = [
+        {
+            "program": name,
+            "total": round(sum(vals), 1),
+            "average": round(sum(vals) / len(vals), 1),
+            "count": len(vals),
+        }
+        for name, vals in groups.items()
+    ]
+    result.sort(key=lambda x: x["total"], reverse=True)
+    return result
+
+
 def _fmt(d) -> str:
     if isinstance(d, date_type):
         return d.strftime("%Y-%m")

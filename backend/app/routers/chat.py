@@ -3,8 +3,8 @@ from datetime import datetime
 from fastapi import APIRouter, HTTPException
 
 from app.models.chat import ChatRequest, ChatResponse
-from app.routers.data import fetch_all_rows
 from app.services import analysis, openai_service
+from app.services.data_service import fetch_all_rows
 from app.services.firestore_service import CONVERSATIONS_COLLECTION, get_db
 
 router = APIRouter(prefix="/api/chat", tags=["chat"])
