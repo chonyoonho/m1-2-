@@ -11,7 +11,7 @@ def get_client() -> OpenAI:
     if _client is None:
         if not settings.openai_api_key:
             raise RuntimeError("OPENAI_API_KEY 환경 변수가 설정되지 않았습니다.")
-        _client = OpenAI(api_key=settings.openai_api_key)
+        _client = OpenAI(api_key=settings.openai_api_key, base_url=settings.openai_base_url)
     return _client
 
 
